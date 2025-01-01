@@ -1,12 +1,15 @@
 package main
 
 import (
+	"log"
+	"net/http"
+
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"log"
-	"net/http"
 )
 
 type User struct {
@@ -27,13 +30,14 @@ func main() {
 	if err != nil {
 		panic("failed to migrate database: " + err.Error())
 	}
-
 	router := gin.Default()
+	store := cookie.NewStore([]byte("secret"))
+	router.Use(sessions.Sessions("mysession", store))
 
 	router.POST("/register", func(c *gin.Context) {
 		var user User
-		err := c.ShouldBindJSON(&user)
-		if err != nil {
+
+		if err := c.ShouldBindJSON(&user); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"msg": "회원가입 실패 요청 오류",
 			})
@@ -81,16 +85,12 @@ func main() {
 			return
 		}
 
+		session := sessions.Default(c)
+		session.Set("username", DbUser.Username)
+		session.Save()
+
 		c.JSON(http.StatusOK, gin.H{"msg": "로그인 완료! 쿠키 발급"})
-		c.SetCookie(
-			"AuthCookie",    // 쿠키 이름
-			"example_token", // 쿠키 값 (실제 서비스에서는 JWT 등으로 대체)
-			3600,            // 유효 시간 (초)
-			"/",             // 경로
-			"",              // 도메인
-			false,           // HTTPS에서만 전송 여부
-			true,            // HttpOnly
-		)
+		return
 	})
 	router.Run(":8080")
 }
