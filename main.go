@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golangCRUD/db"
 	"golangCRUD/handler"
+	"golangCRUD/middleware"
 )
 
 // TODO: Add .env
@@ -23,7 +24,7 @@ func main() {
 	router.POST("/register", handler.RegisterHandler(db))
 	router.POST("/login", handler.LoginHandler(db))
 	router.GET("/logout", handler.LogOutHandler())
-	router.GET("/test", handler.TestPathHandler())
+	router.GET("/test", middleware.SessionAuthMiddleware(), handler.TestPathHandler())
 
 	router.Run(":8080")
 }

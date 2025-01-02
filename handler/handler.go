@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"golangCRUD/models"
-	"golangCRUD/util"
 	"gorm.io/gorm"
 	"log"
 	"net/http"
@@ -110,11 +109,6 @@ func LogOutHandler() gin.HandlerFunc {
 
 func TestPathHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if flag := util.CookieChecker(c, "username"); !flag {
-			c.JSON(200, gin.H{"msg": "로그인을 하고 있지 않습니다"})
-			return
-		}
-
 		c.JSON(200, gin.H{"hello": "hi!"})
 		return
 	}
