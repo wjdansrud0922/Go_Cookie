@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"golangCRUD/models"
+	"golangCRUD/util"
 	"gorm.io/gorm"
 	"log"
 	"net/http"
@@ -91,26 +92,26 @@ func LogOutHandler() gin.HandlerFunc {
 
 		session := sessions.Default(c)
 		if session.Get("username") == nil {
-			c.JSON(400, gin.H{"hello": "fuck you"})
+			c.JSON(400, gin.H{"msg": "로그인하지 않으셨습니다."})
+
 			return
 		}
 
 		session.Delete("username")
 		session.Clear()
-
 		c.SetCookie("AuthCookie", "test", -1, "/", "localhost", false, true)
 		session.Save()
-		c.JSON(200, gin.H{"hello": "쿠키제거완료!"})
+
+		c.JSON(200, gin.H{"msg": "로그인 완료"})
+
 		return
 	}
 }
 
 func TestPathHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		session := sessions.Default(c)
-		if session.Get("username") == nil {
-			c.JSON(400, gin.H{"hello": "fuck you"})
+		if flag := util.CookieChecker(c, "username"); !flag {
+			c.JSON(200, gin.H{"msg": "로그인을 하고 있지 않습니다"})
 			return
 		}
 
