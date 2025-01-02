@@ -22,7 +22,6 @@ func RegisterHandler(db *gorm.DB) gin.HandlerFunc {
 
 			log.Println(err.Error())
 			return
-
 		}
 
 		if err := db.Where("username = ?", User.Username).First(&DbUser).Error; err == nil {
@@ -60,24 +59,62 @@ func LoginHandler(db *gorm.DB) gin.HandlerFunc {
 		var requestUser models.User
 		var dbUser models.User
 
-		err := c.ShouldBindJSON(&requestUser)
-		if err != nil {
+		if err := c.ShouldBindJSON(&requestUser); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"msg": "입력값 오류"})
 			log.Println(err.Error())
 			return
 		}
 
-		if err := bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(requestUser.Password)); err != nil {
+		if err := db.Where("username = ?", requestUser.Username).First(&dbUser).Error; err != nil { // 유저 이름에 맞는 패스워드가 존재하지 않으면 오류 즉 유저이름이 저장되어있지 않음
 			c.JSON(http.StatusNotFound, gin.H{"msg": "아이디 또는 패스워드가 틀렸습니다."})
+			log.Println(err.Error())
+			return
+		}
+
+		if err := bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(requestUser.Password)); err != nil { // 해당 유저의 패스워드와 유저이름으로 조회한 암호화된 패스워드가 다르면 오류 즉 비밀번호가 틀림
+			c.JSON(http.StatusNotFound, gin.H{"msg": "아이디 또는 패스워드가 틀렸습니다."})
+			log.Println(err.Error())
 			return
 		}
 
 		session := sessions.Default(c)
+		c.SetCookie("AuthCookie", "test", 3600, "/", "localhost", false, true)
 		session.Set("username", dbUser.Username)
 		session.Save()
 
 		c.JSON(http.StatusOK, gin.H{"msg": "로그인 완료! 쿠키 발급"})
 		return
 	}
+}
+func LogOutHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
 
+		session := sessions.Default(c)
+		if session.Get("username") == nil {
+			c.JSON(400, gin.H{"hello": "fuck you"})
+			return
+		}
+
+		session.Delete("username")
+		session.Clear()
+
+		c.SetCookie("AuthCookie", "test", -1, "/", "localhost", false, true)
+		session.Save()
+		c.JSON(200, gin.H{"hello": "쿠키제거완료!"})
+		return
+	}
+}
+
+func TestPathHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		session := sessions.Default(c)
+		if session.Get("username") == nil {
+			c.JSON(400, gin.H{"hello": "fuck you"})
+			return
+		}
+
+		c.JSON(200, gin.H{"hello": "hi!"})
+		return
+	}
 }

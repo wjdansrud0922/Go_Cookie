@@ -22,6 +22,8 @@ func main() {
 
 	router.POST("/register", handler.RegisterHandler(db))
 	router.POST("/login", handler.LoginHandler(db))
+	router.GET("/logout", handler.LogOutHandler())
+	router.GET("/test", handler.TestPathHandler())
 
 	router.Run(":8080")
 }
