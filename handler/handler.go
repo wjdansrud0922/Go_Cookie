@@ -79,7 +79,7 @@ func LoginHandler(db *gorm.DB) gin.HandlerFunc {
 
 		session := sessions.Default(c)
 		c.SetCookie("AuthCookie", "test", 3600, "/", "localhost", false, true)
-		session.Set("username", dbUser.Username)
+		session.Set("username", true)
 		session.Save()
 
 		c.JSON(http.StatusOK, gin.H{"msg": "로그인 완료! 쿠키 발급"})
@@ -90,7 +90,7 @@ func LogOutHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		session := sessions.Default(c)
-		if session.Get("username") == nil {
+		if session.Get("username") == true {
 			c.JSON(400, gin.H{"msg": "로그인하지 않으셨습니다."})
 
 			return
